@@ -6,34 +6,48 @@ openBtn.addEventListener("click", async () => {
     const file = fileInput.files[0];
 
     if (!file) {
-        output.textContent = "Please choose an APK file.";
+        output.textContent = "اختر ملف APK أولاً";
         return;
     }
 
-    output.textContent = "Opening APK...";
+    output.textContent = "جاري قراءة APK...";
 
     try {
         const zip = await JSZip.loadAsync(file);
 
-        let result = "";
-        let count = 0;
+        const files = [];
 
-        zip.forEach((path, entry) => {
-            count++;
-            result += path + "\n";
+        zip.forEach((path) => {
+            files.push(path);
         });
 
+        files.sort();
+
+        const manifest = files.find(
+            name => name === "AndroidManifest.xml"
+        );
+
         output.textContent =
-`APK opened successfully!
+`تم فتح APK بنجاح ✅
 
-File: ${file.name}
-Files: ${count}
+اسم الملف:
+${file.name}
 
-========================
+عدد الملفات:
+${files.length}
 
-${result}`;
+Manifest:
+${manifest ? "تم العثور عليه ✅" : "غير موجود ❌"}
 
-    } catch (e) {
-        output.textContent = "Failed to open APK.\n\n" + e.message;
+================
+
+أول 100 ملف:
+
+${files.slice(0, 100).join("\n")}
+`;
+
+    } catch (error) {
+        output.textContent =
+        "حدث خطأ:\n" + error.message;
     }
 });
