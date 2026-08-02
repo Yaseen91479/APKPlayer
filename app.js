@@ -10,18 +10,32 @@ openBtn.addEventListener("click", async () => {
         return;
     }
 
-    output.textContent = "جاري تحليل APK...";
+    output.textContent = "جاري البحث عن صورة التطبيق...";
 
     try {
         const zip = await JSZip.loadAsync(file);
 
-        const files = Object.keys(zip.files);
+        let iconFile = null;
 
-        const manifestExists = files.includes("AndroidManifest.xml");
-        const dexExists = files.some(f => f.endsWith(".dex"));
-        const resourcesExists = files.includes("resources.arsc");
+        Object.keys(zip.files).forEach(name => {
+            if (
+                name.startsWith("res/") &&
+                (
+                    name.endsWith(".png") ||
+                    name.endsWith(".webp") ||
+                    name.endsWith(".jpg")
+                )
+            ) {
+                if (
+                    name.includes("mipmap") ||
+                    name.includes("drawable")
+                ) {
+                    iconFile = name;
+                }
+            }
+        });
 
-        output.textContent =
+        let result =
 `APK Information
 
 اسم الملف:
@@ -31,22 +45,25 @@ ${file.name}
 ${(file.size / 1024 / 1024).toFixed(2)} MB
 
 عدد الملفات:
-${files.length}
+${Object.keys(zip.files).length}
 
-المكونات:
-
-${manifestExists ? "✅ AndroidManifest.xml" : "❌ AndroidManifest.xml"}
-
-${resourcesExists ? "✅ resources.arsc" : "❌ resources.arsc"}
-
-${dexExists ? "✅ classes.dex" : "❌ classes.dex"}
+الأيقونة:
+${iconFile ? iconFile : "لم يتم العثور عليها"}
 
 الحالة:
-جاهز للتحليل
+تم التحليل ✅
 `;
 
-    } catch (error) {
-        output.textContent = 
-        "خطأ في قراءة APK:\n" + error.message;
+        if (iconFile) {
+            const blob = await zip.files[iconFile].async("blob");
+            const url = URL.createObjectURL(blob);
+
+            result += `\n\nصورة الأيقونة:\n${url}`;
+        }
+
+        output.textContent = result;
+
+    } catch (e) {
+        output.textContent = "خطأ:\n" + e.message;
     }
 });
