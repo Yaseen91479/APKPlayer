@@ -10,44 +10,43 @@ openBtn.addEventListener("click", async () => {
         return;
     }
 
-    output.textContent = "جاري قراءة APK...";
+    output.textContent = "جاري تحليل APK...";
 
     try {
         const zip = await JSZip.loadAsync(file);
 
-        const files = [];
+        const files = Object.keys(zip.files);
 
-        zip.forEach((path) => {
-            files.push(path);
-        });
-
-        files.sort();
-
-        const manifest = files.find(
-            name => name === "AndroidManifest.xml"
-        );
+        const manifestExists = files.includes("AndroidManifest.xml");
+        const dexExists = files.some(f => f.endsWith(".dex"));
+        const resourcesExists = files.includes("resources.arsc");
 
         output.textContent =
-`تم فتح APK بنجاح ✅
+`APK Information
 
 اسم الملف:
 ${file.name}
 
+الحجم:
+${(file.size / 1024 / 1024).toFixed(2)} MB
+
 عدد الملفات:
 ${files.length}
 
-Manifest:
-${manifest ? "تم العثور عليه ✅" : "غير موجود ❌"}
+المكونات:
 
-================
+${manifestExists ? "✅ AndroidManifest.xml" : "❌ AndroidManifest.xml"}
 
-أول 100 ملف:
+${resourcesExists ? "✅ resources.arsc" : "❌ resources.arsc"}
 
-${files.slice(0, 100).join("\n")}
+${dexExists ? "✅ classes.dex" : "❌ classes.dex"}
+
+الحالة:
+جاهز للتحليل
 `;
 
     } catch (error) {
-        output.textContent =
-        "حدث خطأ:\n" + error.message;
+        output.textContent = 
+        "خطأ في قراءة APK:\n" + error.message;
     }
 });
