@@ -1,10 +1,8 @@
-
 const fileInput = document.getElementById("apkFile");
 const openBtn = document.getElementById("openBtn");
 const output = document.getElementById("output");
 
-openBtn.addEventListener("click", () => {
-
+openBtn.addEventListener("click", async () => {
     const file = fileInput.files[0];
 
     if (!file) {
@@ -12,10 +10,30 @@ openBtn.addEventListener("click", () => {
         return;
     }
 
-    output.textContent =
-`File Name: ${file.name}
-Size: ${(file.size / 1024 / 1024).toFixed(2)} MB
-Type: ${file.type || "Unknown"}
+    output.textContent = "Opening APK...";
 
-APK loaded successfully.`;
+    try {
+        const zip = await JSZip.loadAsync(file);
+
+        let result = "";
+        let count = 0;
+
+        zip.forEach((path, entry) => {
+            count++;
+            result += path + "\n";
+        });
+
+        output.textContent =
+`APK opened successfully!
+
+File: ${file.name}
+Files: ${count}
+
+========================
+
+${result}`;
+
+    } catch (e) {
+        output.textContent = "Failed to open APK.\n\n" + e.message;
+    }
 });
